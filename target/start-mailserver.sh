@@ -96,7 +96,8 @@ function register_functions() {
 
 	if [ "$SMTP_ONLY" != 1 ]; then
 		_register_setup_function "_setup_dovecot"
-                _register_setup_function "_setup_dovecot_dhparam"
+		_register_setup_function "_setup_dovecot_sni_domains"
+		_register_setup_function "_setup_dovecot_dhparam"
 		_register_setup_function "_setup_dovecot_local_user"
 	fi
 
@@ -129,6 +130,7 @@ function register_functions() {
 	_register_setup_function "_setup_security_stack"
 	_register_setup_function "_setup_postfix_aliases"
 	_register_setup_function "_setup_postfix_vhost"
+	_register_setup_function "_setup_postfix_sni_domains"
 	_register_setup_function "_setup_postfix_dhparam"
 	_register_setup_function "_setup_postfix_postscreen"
 	_register_setup_function "_setup_postfix_sizelimits"
@@ -630,6 +632,38 @@ function _setup_dovecot_local_user() {
 		fi
 	fi
 
+}
+
+function _setup_dovecot_sni_domains() {
+	notify 'task' "Setting up Dovecot SNI domains"
+	
+	sni_conffile="/etc/dovecot/conf.d/10-ssl-sni.conf"
+	[ -f "$sni_conffile" ] && rm $sni_conffile
+	if [ ! -z "$SNI_DOMAINS" ]; then
+		for domain in $(echo $SNI_DOMAINS | sed "s/,/ /g")
+		do
+			notify 'inf' "SNI domain $domain"
+			echo "local_name $domain {" >> $sni_conffile
+			echo "  ssl_cert = </etc/letsencrypt/live/$domain/fullchain.pem" >> $sni_conffile
+			echo "  ssl_key = </etc/letsencrypt/live/$domain/privkey.pem" >> $sni_conffile
+			echo "}" >> $sni_conffile
+		done
+  	fi
+}
+
+function _setup_postfix_sni_domains() {
+	notify 'task' "Setting up Postfix SNI domains"
+	
+	sni_conffile="/etc/postfix/vmail_tls.map"
+	[ -f "$sni_conffile" ] && rm $sni_conffile
+	if [ ! -z "$SNI_DOMAINS" ]; then
+		for domain in $(echo $SNI_DOMAINS | sed "s/,/ /g")
+		do
+			notify 'inf' "SNI domain $domain"
+			echo "$domain /etc/letsencrypt/live/$domain/privkey.pem /etc/letsencrypt/live/$domain/fullchain.pem" >> $sni_conffile
+		done
+		postmap -F "hash:$sni_conffile"
+  	fi
 }
 
 function _setup_ldap() {
