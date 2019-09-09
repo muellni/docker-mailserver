@@ -18,7 +18,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 # Packages
 # hadolint ignore=DL3015,SC2016
-RUN echo "deb http://ftp.debian.org/debian stretch-backports main" | tee -a /etc/apt/sources.list.d/stretch-bp.list && \
+RUN echo "deb http://ftp.debian.org/debian buster-backports main" | tee -a /etc/apt/sources.list.d/buster-bp.list && \
   apt-get update -q --fix-missing && \
   apt-get -y install postfix && \
   # TODO installing postfix with --no-install-recommends makes "checking ssl: generated default cert works correctly" fail
@@ -64,7 +64,6 @@ RUN echo "deb http://ftp.debian.org/debian stretch-backports main" | tee -a /etc
     postsrsd \
     pyzor \
     razor \
-    ripole \
     rpm2cpio \
     rsyslog \
     sasl2-bin \
@@ -75,13 +74,6 @@ RUN echo "deb http://ftp.debian.org/debian stretch-backports main" | tee -a /etc
     unzip \
     whois \
     xz-utils \
-    zoo \
-    && \
-  curl https://repo.dovecot.org/DOVECOT-REPO-GPG | gpg --import && \
-  gpg --export ED409DA1 > /etc/apt/trusted.gpg.d/dovecot.gpg && \
-  echo "deb https://repo.dovecot.org/ce-2.3-latest/debian/stretch stretch main" > /etc/apt/sources.list.d/dovecot.list && \
-  apt-get update -q --fix-missing && \
-  apt-get -y install --no-install-recommends \
     dovecot-core \
     dovecot-imapd \
     dovecot-ldap \
